@@ -176,7 +176,7 @@ export default function QuestionDetailPage() {
 
   if (!question && !loading) return (
     <div className="min-h-screen bg-[#F7F6F2]">
-      <Navbar />
+      <NavbarWrapper />
       <div className="max-w-3xl mx-auto px-4 py-32 text-center">
         <p className="text-6xl mb-4">🔍</p>
         <h1 className="text-2xl font-bold text-slate-800 mb-2">Question not found</h1>
@@ -216,7 +216,7 @@ export default function QuestionDetailPage() {
         input:focus { box-shadow: 0 0 0 3px rgba(15,23,42,0.08); }
       `}</style>
 
-      <Navbar />
+      <NavbarWrapper />
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-20">
 
