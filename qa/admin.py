@@ -1,0 +1,26 @@
+from django.contrib import admin
+from .models import Category, Question, Answer, Tag, UserProfile
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'created_at']
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ['name']
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ['title', 'category', 'author', 'created_at']
+    list_filter = ['category', 'created_at']
+    filter_horizontal = ['tags']
+
+@admin.register(Answer)
+class AnswerAdmin(admin.ModelAdmin):
+    list_display = ['question', 'author', 'is_best', 'created_at']
+    list_filter = ['is_best', 'created_at']
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'reputation']
+
