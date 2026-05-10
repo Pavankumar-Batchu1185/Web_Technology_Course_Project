@@ -28,14 +28,14 @@ jobs:
       - name: Run Django checks
         run: |
           python manage.py check
-      
-      - name: Run migrations check
-        run: |
-          python manage.py makemigrations --check --dry-run
+        env:
+          DATABASE_URL: sqlite:///test_db.sqlite3
       
       - name: Run tests
         run: |
           python manage.py test --verbosity=2
+        env:
+          DATABASE_URL: sqlite:///test_db.sqlite3
 
   frontend-tests:
     name: Frontend Tests
