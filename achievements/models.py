@@ -4,9 +4,10 @@ from django.utils import timezone
 
 class Achievement(models.Model):
     ACHIEVEMENT_TYPES = [
-        ('hackathon', 'Hackathon'),
-        ('competition', 'Competition'),
-        ('award', 'Award'),
+        ('academic', 'Academic'),
+        ('sports', 'Sports'),
+        ('arts', 'Arts'),
+        ('community', 'Community'),
         ('other', 'Other'),
     ]
     
@@ -24,4 +25,3 @@ class Achievement(models.Model):
 
     class Meta:
         ordering = ['-date_achieved']
-

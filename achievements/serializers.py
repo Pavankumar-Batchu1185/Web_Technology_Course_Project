@@ -1,5 +1,3 @@
-
-
 from rest_framework import serializers
 from .models import Achievement
 from qa.serializers import UserSerializer

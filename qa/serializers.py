@@ -1,25 +1,39 @@
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Category, Tag, Question, Answer, UserProfile
+from .models import Category, Tag, Question, Answer, UserProfile, Announcement
 
 class UserSerializer(serializers.ModelSerializer):
     reputation = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+    department = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'reputation']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'reputation', 'role', 'department', 'is_staff']
 
     def get_reputation(self, obj):
         return obj.userprofile.reputation if hasattr(obj, 'userprofile') else 0
+    
+    def get_role(self, obj):
+        if hasattr(obj, 'staff_profile'):
+            return obj.staff_profile.role
+        return 'student'
+    
+    def get_department(self, obj):
+        if hasattr(obj, 'staff_profile'):
+            return obj.staff_profile.department
+        return ''
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True, min_length=8)
+    role = serializers.ChoiceField(choices=['student', 'faculty', 'hod', 'dean'], required=False, write_only=True)
+    department = serializers.CharField(required=False, write_only=True, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirm']
+        fields = ['username', 'email', 'password', 'password_confirm', 'role', 'department']
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
@@ -32,11 +46,26 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        role = validated_data.pop('role', 'student')
+        department = validated_data.pop('department', '')
+        
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data.get('email', ''),
             password=validated_data['password']
         )
+        
+        # Create StaffProfile if role is not student
+        if role in ['faculty', 'hod', 'dean']:
+            from accounts.models import StaffProfile
+            user.is_staff = True
+            user.save()
+            StaffProfile.objects.create(
+                user=user,
+                role=role,
+                department=department
+            )
+        
         return user
     
 class CategorySerializer(serializers.ModelSerializer):
@@ -153,12 +182,24 @@ class UserProfileSerializer(serializers.ModelSerializer):
     question_count = serializers.SerializerMethodField()
     answer_count = serializers.SerializerMethodField()
     
+    
     class Meta:
         model = UserProfile
-        fields = ['username', 'email', 'reputation', 'bio', 'date_joined', 'question_count', 'answer_count']
+        fields = ['username', 'email', 'reputation', 'bio', 'date_joined', 'question_count', 'answer_count', 'banner_image']
     
     def get_question_count(self, obj):
         return Question.objects.filter(author=obj.user).count()
     
     def get_answer_count(self, obj):
         return Answer.objects.filter(author=obj.user).count()
+
+
+class AnnouncementSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    tag_display = serializers.CharField(source='get_tag_display', read_only=True)
+
+    class Meta:
+        model = Announcement
+        fields = ['id', 'title', 'content', 'tag', 'tag_display', 'author',
+                  'is_pinned', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']

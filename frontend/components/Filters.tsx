@@ -49,18 +49,20 @@ export default function Filters({ onFilterChange }: FilterProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border-2 border-gray-200 px-5 py-3.5 mb-5">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200 px-6 py-4 mb-6 shadow-sm">
       <div className="flex flex-wrap gap-3 items-center">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Filter</span>
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filters
+        </span>
 
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}
-            className="bg-gray-100 border-2 border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-gray-900 transition-colors cursor-pointer"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all cursor-pointer hover:bg-slate-100"
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
@@ -70,13 +72,10 @@ export default function Filters({ onFilterChange }: FilterProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-          </svg>
           <select
             value={selectedTag}
             onChange={handleTagChange}
-            className="bg-gray-100 border-2 border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-gray-900 transition-colors cursor-pointer"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all cursor-pointer hover:bg-slate-100"
           >
             <option value="">All Tags</option>
             {tags.map((tag) => (
@@ -86,13 +85,10 @@ export default function Filters({ onFilterChange }: FilterProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <svg className="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-          </svg>
           <select
             value={sortBy}
             onChange={handleSortChange}
-            className="bg-gray-100 border-2 border-gray-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-gray-800 focus:outline-none focus:border-gray-900 transition-colors cursor-pointer"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all cursor-pointer hover:bg-slate-100"
           >
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>

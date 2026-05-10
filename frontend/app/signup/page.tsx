@@ -37,7 +37,7 @@ const features = [
 export default function SignupPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '', role: 'student', department: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ export default function SignupPage() {
 
   useEffect(() => { setMounted(true); }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (error) setError('');
   };
@@ -56,6 +56,7 @@ export default function SignupPage() {
     setError('');
     if (formData.password !== formData.confirmPassword) { setError('Passwords do not match'); return; }
     if (formData.password.length < 8) { setError('Password must be at least 8 characters'); return; }
+    if (formData.role !== 'student' && !formData.department.trim()) { setError('Department is required for staff roles'); return; }
     try {
       setLoading(true);
       const { data } = await axios.post(`${API_BASE}/register/`, {
@@ -63,6 +64,8 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         password_confirm: formData.confirmPassword,
+        role: formData.role,
+        department: formData.department,
       });
       localStorage.setItem('access_token', data.access);
       localStorage.setItem('refresh_token', data.refresh);
@@ -601,10 +604,60 @@ export default function SignupPage() {
           <div className="panel-noise" />
           <div className="panel-glow" />
 
-          <Link href="/" className="panel-logo">
-            <div className="logo-mark"><span>Q</span></div>
-            <span className="logo-name">CampusQA</span>
-          </Link>
+         <Link
+  href="/"
+  className="
+    flex
+    items-center
+    gap-4
+    group
+    w-fit
+  "
+>
+  <div
+    className="
+      w-14
+      h-14
+      rounded-2xl
+      flex
+      items-center
+      justify-center
+      bg-gradient-to-br
+      from-blue-500
+      to-blue-400
+      shadow-[0_0_30px_rgba(59,130,246,0.35)]
+      transition-all
+      duration-300
+      group-hover:scale-105
+    "
+  >
+    <span
+      className="
+        text-white
+        text-3xl
+        font-black
+        tracking-tight
+        font-family: 'Syne', sans-serif;
+        
+      "
+    >
+      Q
+    </span>
+  </div>
+
+  <span
+    className="
+      text-white
+      text-[2rem]
+      font-black
+      tracking-[-0.06em]
+      leading-none
+      font-family: 'Syne', sans-serif;
+    "
+  >
+    CampusQA
+  </span>
+</Link>
 
           <div className="panel-main">
             <p className="panel-headline">
@@ -689,7 +742,48 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-              
+                {/* Role Selection */}
+                <div className="field-group">
+                  <label className="field-label">I am a</label>
+                  <div className="field-input-wrap">
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      onFocus={() => setFocusedField('role')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`field-input ${focusedField === 'role' ? 'success' : ''}`}
+                      required
+                    >
+                      <option value="student">Student</option>
+                      <option value="faculty">Faculty Member</option>
+                      <option value="hod">Head of Department</option>
+                      <option value="dean">Dean</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Department (only for staff) */}
+                {formData.role !== 'student' && (
+                  <div className="field-group">
+                    <label className="field-label">Department</label>
+                    <div className="field-input-wrap">
+                      <input
+                        className="field-input"
+                        type="text"
+                        name="department"
+                        value={formData.department}
+                        onChange={handleChange}
+                        onFocus={() => setFocusedField('department')}
+                        onBlur={() => setFocusedField(null)}
+                        placeholder="e.g. Computer Science"
+                        required={formData.role !== 'student'}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Password */}
                 <div className="field-group">
                   <label className="field-label">Password</label>
                   <div className="field-input-wrap">

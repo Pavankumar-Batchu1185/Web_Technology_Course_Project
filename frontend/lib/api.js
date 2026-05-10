@@ -97,4 +97,13 @@ export const profileAPI = {
   update: (data) => api.put('/profiles/me/', data),
 };
 
+// Announcements
+export const announcementAPI = {
+  list: (params) => api.get('/announcements/', { params }),
+  get: (id) => api.get(`/announcements/${id}/`),
+  create: (data) => api.post('/announcements/', data),
+  update: (id, data) => api.patch(`/announcements/${id}/`, data),
+  delete: (id) => api.delete(`/announcements/${id}/`),
+};
+
 export default api;

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'achievements',
     'rest_framework',
     'rest_framework_simplejwt',
+    'accounts',
 ]
 
 MIDDLEWARE = [

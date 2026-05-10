@@ -5,4 +5,3 @@ from .models import Achievement
 class AchievementAdmin(admin.ModelAdmin):
     list_display = ['title', 'achievement_type', 'student', 'date_achieved', 'created_at']
     list_filter = ['achievement_type', 'date_achieved']
-
