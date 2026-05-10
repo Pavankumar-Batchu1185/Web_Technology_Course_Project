@@ -8,22 +8,27 @@
     <div>
         {% if user == question.author %}
             <a href="{% url 'edit_question' question.pk %}" class="btn btn-sm">Edit</a>
-            <a href="{% url 'delete_question' question.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</a>
+            <form method="post" action="{% url 'delete_question' question.pk %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this question?')">Delete</button>
+            </form>
         {% endif %}
     </div>
 </div>
 
 <div style="display: flex; gap: 15px; margin: 20px 0;">
     <div style="text-align: center;">
-        <form method="post" action="{% url 'vote_question' question.pk 'up' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit" class="vote-btn {% if user in question.upvotes.all %}active{% endif %}">▲ {{ question.upvotes.count }}</button>
-        </form>
-        <div style="font-size: 20px; margin: 5px 0;">{{ question.vote_score }}</div>
-        <form method="post" action="{% url 'vote_question' question.pk 'down' %}" style="display: inline;">
-            {% csrf_token %}
-            <button type="submit" class="vote-btn {% if user in question.downvotes.all %}active{% endif %}">▼ {{ question.downvotes.count }}</button>
-        </form>
+        {% with upvoters=question.upvotes.all downvoters=question.downvotes.all %}
+            <form method="post" action="{% url 'vote_question' question.pk 'up' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="vote-btn {% if user.is_authenticated and user in upvoters %}active{% endif %}">▲ {{ question.upvotes.count }}</button>
+            </form>
+            <div style="font-size: 20px; margin: 5px 0;">{{ question.vote_score }}</div>
+            <form method="post" action="{% url 'vote_question' question.pk 'down' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="vote-btn {% if user.is_authenticated and user in downvoters %}active{% endif %}">▼ {{ question.downvotes.count }}</button>
+            </form>
+        {% endwith %}
     </div>
     <div style="flex: 1;">
         {% if question.image %}
@@ -36,8 +41,8 @@
             {% endfor %}
         </div>
         <small>
-            Category: {{ question.category.name }} | 
-            By: <a href="{% url 'user_profile' question.author.username %}">{{ question.author.username }}</a> ({{ question.author.userprofile.reputation|default:0 }}) | 
+            Category: {{ question.category.name }} |
+            By: <a href="{% url 'user_profile' question.author.username %}">{{ question.author.username }}</a> ({{ question.author.userprofile.reputation|default:0 }}) |
             {{ question.time_since }}
         </small>
     </div>
@@ -47,17 +52,18 @@
 
 <h3>{{ question.answers.count }} Answer{{ question.answers.count|pluralize }}</h3>
 {% for answer in question.answers.all %}
-    <div style="border-left: 3px solid {% if answer.is_best %}#28a745{% else %}#007bff{% endif %}; padding-left: 15px; margin-bottom: 15px; {% if answer.is_best %}background: #f0fff0;{% endif %}">
+    {% with ans_upvoters=answer.upvotes.all ans_downvoters=answer.downvotes.all %}
+   <div class="answer-card {% if answer.is_best %}answer-best{% else %}answer-normal{% endif %}"></div>
         <div style="display: flex; gap: 15px;">
             <div style="text-align: center; min-width: 50px;">
                 <form method="post" action="{% url 'vote_answer' answer.pk 'up' %}" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="vote-btn {% if user in answer.upvotes.all %}active{% endif %}">▲</button>
+                    <button type="submit" class="vote-btn {% if user.is_authenticated and user in ans_upvoters %}active{% endif %}">▲</button>
                 </form>
                 <div style="font-size: 18px; margin: 5px 0;">{{ answer.vote_score }}</div>
                 <form method="post" action="{% url 'vote_answer' answer.pk 'down' %}" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="vote-btn {% if user in answer.downvotes.all %}active{% endif %}">▼</button>
+                    <button type="submit" class="vote-btn {% if user.is_authenticated and user in ans_downvoters %}active{% endif %}">▼</button>
                 </form>
                 {% if user == question.author and not answer.is_best %}
                     <form method="post" action="{% url 'mark_best_answer' answer.pk %}" style="margin-top: 10px;">
@@ -70,16 +76,20 @@
                 {% if answer.is_best %}<strong style="color: #28a745;">✓ Best Answer</strong><br>{% endif %}
                 <p>{{ answer.content }}</p>
                 <small>
-                    By: <a href="{% url 'user_profile' answer.author.username %}">{{ answer.author.username }}</a> ({{ answer.author.userprofile.reputation|default:0 }}) | 
+                    By: <a href="{% url 'user_profile' answer.author.username %}">{{ answer.author.username }}</a> ({{ answer.author.userprofile.reputation|default:0 }}) |
                     {{ answer.time_since }}
                     {% if user == answer.author %}
                         | <a href="{% url 'edit_answer' answer.pk %}">Edit</a>
-                        | <a href="{% url 'delete_answer' answer.pk %}" onclick="return confirm('Delete this answer?')">Delete</a>
+                        | <form method="post" action="{% url 'delete_answer' answer.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this answer?')">Delete</button>
+                          </form>
                     {% endif %}
                 </small>
             </div>
         </div>
     </div>
+    {% endwith %}
 {% empty %}
     <p>No answers yet.</p>
 {% endfor %}
