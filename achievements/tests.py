@@ -12,11 +12,10 @@ class AchievementModelTest(TestCase):
         achievement = Achievement.objects.create(
             title='Test Achievement',
             description='Test description',
-            student_name='John Doe',
-            achievement_type='academic',
+            achievement_type='hackathon',
             date_achieved=date.today(),
-            author=self.user
+            student=self.user
         )
         self.assertEqual(achievement.title, 'Test Achievement')
-        self.assertEqual(achievement.student_name, 'John Doe')
-        self.assertEqual(achievement.achievement_type, 'academic')
+        self.assertEqual(achievement.student.username, 'testuser')
+        self.assertEqual(achievement.achievement_type, 'hackathon')
