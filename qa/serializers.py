@@ -181,8 +181,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
     question_count = serializers.SerializerMethodField()
     answer_count = serializers.SerializerMethodField()
-    
-    
+
     class Meta:
         model = UserProfile
         fields = ['username', 'email', 'reputation', 'bio', 'date_joined', 'question_count', 'answer_count', 'banner_image']

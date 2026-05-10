@@ -175,7 +175,6 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
     http_method_names = ['get', 'put', 'patch', 'head', 'options']
 
-
     def get_object(self):
         username = self.kwargs.get('user__username') or self.kwargs.get('pk')
         return UserProfile.objects.get(user__username=username)
@@ -194,7 +193,8 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer = UserProfileSerializer(profile)
         return Response(serializer.data)
-    
+
+
 class AnnouncementViewSet(viewsets.ModelViewSet):
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
@@ -207,10 +207,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Only staff/admin can create announcements
         user = self.request.user
-        is_staff_member = (
-            user.is_staff or
-            hasattr(user, 'staff_profile')
-        )
+        is_staff_member = (user.is_staff or hasattr(user, 'staff_profile'))
         if not is_staff_member:
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Only staff members can post announcements.")
