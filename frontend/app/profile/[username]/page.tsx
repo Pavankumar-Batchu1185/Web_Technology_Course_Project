@@ -14,7 +14,9 @@ interface UserProfile {
   date_joined: string;
   question_count: number;
   answer_count: number;
-  banner_image?:string; 
+  banner_image?: string;
+  role: string;       
+  department: string;  
 }
 interface Question { id: number; title: string; created_at: string; vote_score: number; answer_count: number; }
 interface Answer { id: number; content: string; created_at: string; vote_score: number; question: { id: number; title: string }; }
@@ -253,6 +255,26 @@ export default function ProfilePage() {
                         <p className="text-xs tracking-widest mt-0.5" style={{ color: '#aaa' }}>
                           @{profile.username}
                         </p>
+
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+  <span
+    className="text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full"
+    style={{ background: '#111', color: '#D4A853' }}
+  >
+    {profile.role === 'hod' ? 'Head of Department'
+      : profile.role === 'dean' ? 'Dean'
+      : profile.role === 'faculty' ? 'Faculty Member'
+      : 'Student'}
+  </span>
+  {profile.department && (
+    <span
+      className="text-xs font-medium px-3 py-1 rounded-full"
+      style={{ background: '#F7F5F0', color: '#888', border: '1px solid #E8E4DD' }}
+    >
+      {profile.department}
+    </span>
+  )}
+</div>
                       </div>
 
                              {isOwner && (

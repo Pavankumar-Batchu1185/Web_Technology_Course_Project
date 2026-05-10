@@ -175,22 +175,37 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return QuestionListSerializer(instance, context=self.context).data
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.CharField(source='user.email', read_only=True)
     date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
     question_count = serializers.SerializerMethodField()
     answer_count = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()        
+    department = serializers.SerializerMethodField()    
 
     class Meta:
         model = UserProfile
-        fields = ['username', 'email', 'reputation', 'bio', 'date_joined', 'question_count', 'answer_count', 'banner_image']
-    
+        fields = ['username', 'email', 'reputation', 'bio', 'date_joined', 
+                  'question_count', 'answer_count', 'banner_image',
+                  'role', 'department']                 
+
     def get_question_count(self, obj):
         return Question.objects.filter(author=obj.user).count()
     
     def get_answer_count(self, obj):
         return Answer.objects.filter(author=obj.user).count()
+
+    def get_role(self, obj):                            
+        if hasattr(obj.user, 'staff_profile'):
+            return obj.user.staff_profile.role
+        return 'student'
+
+    def get_department(self, obj):                      
+        if hasattr(obj.user, 'staff_profile'):
+            return obj.user.staff_profile.department
+        return ''
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):

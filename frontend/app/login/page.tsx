@@ -276,20 +276,6 @@ function LoginForm() {
             </p>
           </div>
 
-          
-          <div className="relative flex flex-wrap gap-2">
-            {[
-              { label: 'Questions', val: '2.4k' },
-              { label: 'Answers', val: '8.1k' },
-              { label: 'Students', val: '940' },
-            ].map(({ label, val }) => (
-              <div key={label} className="px-4 py-2.5 flex items-center gap-2.5"
-                style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
-                <span className="serif text-lg font-bold" style={{ color: '#D4A853' }}>{val}</span>
-                <span className="text-xs text-white/40 tracking-widest uppercase">{label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         
@@ -307,8 +293,6 @@ function LoginForm() {
                 Campus<span style={{ color: '#D4A853' }}>QA</span>
               </span>
             </Link>
-
-                      
 
           
             <div className="fade-up fade-up-1 mb-10">

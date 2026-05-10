@@ -105,10 +105,10 @@ export default function SignupPage() {
           background: #fafaf8;
         }
 
-        /* ─── LEFT PANEL ─── */
+
         .panel-left {
           display: none;
-          width: 42%;
+          width: 48%;
           background: #0f0f0e;
           position: relative;
           overflow: hidden;
@@ -248,18 +248,18 @@ export default function SignupPage() {
           letter-spacing: 0.02em;
         }
 
-        /* ─── RIGHT PANEL ─── */
+        
         .panel-right {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 2rem 1.5rem;
+          padding: 2rem 3rem;
         }
 
         .form-card {
           width: 100%;
-          max-width: 400px;
+          max-width: 360px;
           opacity: 0;
           transform: translateY(16px);
           transition: opacity 0.5s ease, transform 0.5s ease;
@@ -328,6 +328,7 @@ export default function SignupPage() {
           display: flex;
           gap: 6px;
           margin-bottom: 2rem;
+           max-width: 360px;
         }
 
         .step-dot {
@@ -763,7 +764,6 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Department (only for staff) */}
                 {formData.role !== 'student' && (
                   <div className="field-group">
                     <label className="field-label">Department</label>
