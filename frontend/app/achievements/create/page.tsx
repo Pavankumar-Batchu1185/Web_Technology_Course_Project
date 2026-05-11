@@ -223,7 +223,7 @@ export default function CreateAchievementPage() {
               className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-colors"
             >
               {submitting ? (
-                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Posting…</>
+                <><div className="w-4 h-4 text-black border-2 border-white/30 border-t-white rounded-full animate-spin" />Posting…</>
               ) : (
                 <>🏆 Post Achievement</>
               )}
