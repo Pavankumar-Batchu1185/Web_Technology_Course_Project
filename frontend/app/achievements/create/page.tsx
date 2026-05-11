@@ -154,11 +154,15 @@ export default function CreateAchievementPage() {
                 className="w-full text-gray-900 font-semibold text-sm focus:outline-none bg-transparent cursor-pointer"
                 required
               >
-                <option value="">Select type</option>
-                <option value="hackathon">Hackathon</option>
-                <option value="competition">Competition</option>
-                <option value="award">Award</option>
-                <option value="other">Other</option>
+               <option value="">Select type</option>
+              <option value="hackathon">Hackathon</option>
+              <option value="competition">Competition</option>
+              <option value="award">Award</option>
+              <option value="academic">Academic</option>
+              <option value="sports">Sports</option>
+              <option value="arts">Arts</option>
+              <option value="community">Community</option>
+              <option value="other">Other</option>
               </select>
             </div>
 

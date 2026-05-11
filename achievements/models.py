@@ -4,12 +4,15 @@ from django.utils import timezone
 
 class Achievement(models.Model):
     ACHIEVEMENT_TYPES = [
-        ('academic', 'Academic'),
-        ('sports', 'Sports'),
-        ('arts', 'Arts'),
-        ('community', 'Community'),
-        ('other', 'Other'),
-    ]
+    ('hackathon', 'Hackathon'),
+    ('competition', 'Competition'),
+    ('award', 'Award'),
+    ('academic', 'Academic'),
+    ('sports', 'Sports'),
+    ('arts', 'Arts'),
+    ('community', 'Community'),
+    ('other', 'Other'),
+]
     
     title = models.CharField(max_length=200)
     description = models.TextField()
