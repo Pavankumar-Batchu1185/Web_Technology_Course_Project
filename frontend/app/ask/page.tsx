@@ -62,41 +62,27 @@ export default function AskQuestionPage() {
     if (!authLoading && !user) router.push('/login?redirect=/ask');
   }, [user, authLoading, router]);
 
- const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!user) return;
-  try {
-    setSubmitting(true);
-    setError('');
-    const tagNames = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
-
-    if (!imageFile) {
-      // No image → send JSON so tags work as a proper array
-      await questionAPI.create({
-        title: formData.title,
-        content: formData.content,
-        category: Number(formData.category),
-        tags: tagNames,
-      });
-    } else {
-      // Has image → FormData, but tags as JSON string
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    try {
+      setSubmitting(true);
+      setError('');
+      const tagNames = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
       const submitData = new FormData();
       submitData.append('title', formData.title);
       submitData.append('content', formData.content);
       submitData.append('category', formData.category);
-      submitData.append('tags', JSON.stringify(tagNames));
-      submitData.append('image', imageFile);
+      tagNames.forEach(tag => submitData.append('tags', tag));
+      if (imageFile) submitData.append('image', imageFile);
       await questionAPI.create(submitData);
+      router.push('/');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create question');
+    } finally {
+      setSubmitting(false);
     }
-
-    router.push('/');
-  } catch (err: any) {
-    console.log('Error:', err.response?.data);
-    setError(err.response?.data?.message || 'Failed to create question');
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
