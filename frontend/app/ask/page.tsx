@@ -27,10 +27,8 @@ function StepLabel({ n, label }: { n: number; label: string }) {
       >
         {n}
       </div>
-      <label
-        className="text-xs font-black uppercase tracking-widest text-gray-400"
-        style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}
-      >
+      <label className="text-xs font-black uppercase tracking-widest text-gray-400"
+        style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}>
         {label}
       </label>
     </div>
@@ -41,7 +39,7 @@ export default function AskQuestionPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true); // ← added
   const [formData, setFormData] = useState({ title: '', content: '', category: '', tags: '' });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
@@ -50,12 +48,11 @@ export default function AskQuestionPage() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // V2: improved category fetching with loading + error state
   useEffect(() => {
     categoryAPI.list()
       .then(({ data }) => setCategories(data.results ?? data))
-      .catch(() => setError('Failed to load categories. Please refresh the page.'))
-      .finally(() => setLoadingCategories(false));
+      .catch(() => setError('Failed to load categories. Please refresh the page.')) // ← added
+      .finally(() => setLoadingCategories(false)); // ← added
   }, []);
 
   useEffect(() => {
@@ -69,15 +66,29 @@ export default function AskQuestionPage() {
       setSubmitting(true);
       setError('');
       const tagNames = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
-      const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('content', formData.content);
-      submitData.append('category', formData.category);
-      tagNames.forEach(tag => submitData.append('tags', tag));
-      if (imageFile) submitData.append('image', imageFile);
-      await questionAPI.create(submitData);
+
+      if (!imageFile) {
+        // No image → send JSON so tags work as a proper array
+        await questionAPI.create({
+          title: formData.title,
+          content: formData.content,
+          category: Number(formData.category),
+          tags: tagNames,
+        });
+      } else {
+        // Has image → FormData, but tags as JSON string
+        const submitData = new FormData();
+        submitData.append('title', formData.title);
+        submitData.append('content', formData.content);
+        submitData.append('category', formData.category);
+        submitData.append('tags', JSON.stringify(tagNames));
+        submitData.append('image', imageFile);
+        await questionAPI.create(submitData);
+      }
+
       router.push('/');
     } catch (err: any) {
+      console.log('Error:', err.response?.data);
       setError(err.response?.data?.message || 'Failed to create question');
     } finally {
       setSubmitting(false);
@@ -109,7 +120,6 @@ export default function AskQuestionPage() {
 
   const parsedTags = formData.tags.split(',').map(t => t.trim()).filter(Boolean);
 
-  // V1: loading spinner style
   if (authLoading || !user) return (
     <div className="min-h-screen" style={{ background: '#F7F5F0' }}>
       <NavbarWrapper />
@@ -122,8 +132,6 @@ export default function AskQuestionPage() {
   return (
     <div className="min-h-screen" style={{ background: '#F7F5F0' }}>
       <NavbarWrapper />
-
-      {/* V1: header bar */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E8E4DD' }}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <button
@@ -139,16 +147,12 @@ export default function AskQuestionPage() {
 
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p
-                className="text-xs font-black uppercase tracking-widest mb-1.5"
-                style={{ color: '#C0954A', fontFamily: "'DM Mono', 'Courier New', monospace" }}
-              >
+              <p className="text-xs font-black uppercase tracking-widest mb-1.5"
+                style={{ color: '#C0954A', fontFamily: "'DM Mono', 'Courier New', monospace" }}>
                 Community Forum
               </p>
-              <h1
-                className="text-4xl md:text-5xl font-black text-gray-900 leading-none"
-                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: '-0.02em' }}
-              >
+              <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-none"
+                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: '-0.02em' }}>
                 Ask a Question
               </h1>
             </div>
@@ -162,11 +166,9 @@ export default function AskQuestionPage() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
-          {/* Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
 
-              {/* Step 1: Title */}
               <div
                 className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
                 style={{ border: '1.5px solid #E8E4DD', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
@@ -185,22 +187,18 @@ export default function AskQuestionPage() {
                     maxLength={200}
                   />
                 </div>
-                {/* V1: character counter footer bar */}
                 <div
                   className="px-6 py-2.5 flex items-center justify-between"
                   style={{ background: '#FAFAF8', borderTop: '1px solid #EEEBE5' }}
                 >
                   <span className="text-xs text-gray-400">Be specific — imagine you're asking an expert</span>
-                  <span
-                    className="text-xs font-bold tabular-nums"
-                    style={{ color: formData.title.length > 160 ? '#C0392B' : '#aaa' }}
-                  >
+                  <span className="text-xs font-bold tabular-nums"
+                    style={{ color: formData.title.length > 160 ? '#C0392B' : '#aaa' }}>
                     {formData.title.length}/200
                   </span>
                 </div>
               </div>
 
-              {/* Step 2: Details */}
               <div
                 className="bg-white rounded-2xl overflow-hidden transition-all duration-200"
                 style={{ border: '1.5px solid #E8E4DD', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
@@ -219,15 +217,13 @@ export default function AskQuestionPage() {
                 </div>
               </div>
 
-              {/* Step 3 & 4: Category + Tags */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-
-                {/* Category — V2: loading/empty states inside V1 card */}
                 <div
                   className="bg-white rounded-2xl p-6"
                   style={{ border: '1.5px solid #E8E4DD', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
                 >
                   <StepLabel n={3} label="Category *" />
+                  {/* ↓ replaced plain select with loading/empty states */}
                   {loadingCategories ? (
                     <div className="flex items-center gap-2 text-gray-400">
                       <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
@@ -256,7 +252,6 @@ export default function AskQuestionPage() {
                   )}
                 </div>
 
-                {/* Tags */}
                 <div
                   className="bg-white rounded-2xl p-6"
                   style={{ border: '1.5px solid #E8E4DD', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
@@ -270,7 +265,7 @@ export default function AskQuestionPage() {
                     placeholder="python, django, api"
                     className="w-full text-gray-900 font-semibold text-sm placeholder-gray-300 focus:outline-none bg-transparent"
                   />
-                  {parsedTags.length > 0 ? (
+                  {parsedTags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {parsedTags.map((tag, i) => (
                         <span
@@ -282,19 +277,20 @@ export default function AskQuestionPage() {
                         </span>
                       ))}
                     </div>
-                  ) : (
+                  )}
+                  {!parsedTags.length && (
                     <p className="text-xs text-gray-400 mt-2">Separate with commas</p>
                   )}
                 </div>
               </div>
 
-              {/* Step 5: Image */}
               <div
                 className="bg-white rounded-2xl overflow-hidden"
                 style={{ border: '1.5px solid #E8E4DD', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}
               >
                 <div className="p-6">
                   <StepLabel n={5} label="Attach an image (optional)" />
+
                   {imagePreview ? (
                     <div className="relative rounded-xl overflow-hidden" style={{ border: '1.5px solid #E8E4DD' }}>
                       <img src={imagePreview} alt="Preview" className="w-full h-52 object-cover" />
@@ -321,10 +317,8 @@ export default function AskQuestionPage() {
                         background: dragOver ? '#F7F5F0' : 'transparent',
                       }}
                     >
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: '#F0ECE4' }}
-                      >
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                        style={{ background: '#F0ECE4' }}>
                         <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
@@ -335,6 +329,7 @@ export default function AskQuestionPage() {
                       </div>
                     </div>
                   )}
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -345,12 +340,9 @@ export default function AskQuestionPage() {
                 </div>
               </div>
 
-              {/* Error */}
               {error && (
-                <div
-                  className="flex items-start gap-3 rounded-2xl px-5 py-4"
-                  style={{ background: '#FEF2F2', border: '1.5px solid #FECACA' }}
-                >
+                <div className="flex items-start gap-3 rounded-2xl px-5 py-4"
+                  style={{ background: '#FEF2F2', border: '1.5px solid #FECACA' }}>
                   <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
@@ -358,7 +350,6 @@ export default function AskQuestionPage() {
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex items-center justify-between gap-3 pt-2">
                 <button
                   type="button"
@@ -398,17 +389,14 @@ export default function AskQuestionPage() {
             </form>
           </div>
 
-          {/* Sidebar — fully V1 */}
           <aside className="space-y-5 lg:sticky lg:top-6">
             <div
               className="rounded-2xl overflow-hidden"
               style={{ background: '#111', border: '1.5px solid #222' }}
             >
               <div className="px-5 pt-5 pb-4">
-                <p
-                  className="text-xs font-black uppercase tracking-widest mb-4"
-                  style={{ color: '#C0954A', fontFamily: "'DM Mono', 'Courier New', monospace" }}
-                >
+                <p className="text-xs font-black uppercase tracking-widest mb-4"
+                  style={{ color: '#C0954A', fontFamily: "'DM Mono', 'Courier New', monospace" }}>
                   Writing Tips
                 </p>
                 <ul className="space-y-3">
@@ -426,10 +414,8 @@ export default function AskQuestionPage() {
               className="rounded-2xl p-5 bg-white"
               style={{ border: '1.5px solid #E8E4DD' }}
             >
-              <p
-                className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3"
-                style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}
-              >
+              <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3"
+                style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}>
                 Community Rules
               </p>
               <p className="text-sm text-gray-500 leading-relaxed">
@@ -437,24 +423,21 @@ export default function AskQuestionPage() {
               </p>
             </div>
 
-            {/* V1: live progress tracker */}
             {(formData.title || formData.content || formData.category) && (
               <div
                 className="rounded-2xl p-5 bg-white"
                 style={{ border: '1.5px solid #E8E4DD' }}
               >
-                <p
-                  className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3"
-                  style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}
-                >
+                <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3"
+                  style={{ fontFamily: "'DM Mono', 'Courier New', monospace" }}>
                   Progress
                 </p>
                 <div className="space-y-2">
                   {[
-                    { label: 'Title',    done: formData.title.length > 0 },
-                    { label: 'Details',  done: formData.content.length > 20 },
+                    { label: 'Title', done: formData.title.length > 0 },
+                    { label: 'Details', done: formData.content.length > 20 },
                     { label: 'Category', done: !!formData.category },
-                    { label: 'Tags',     done: parsedTags.length > 0, optional: true },
+                    { label: 'Tags', done: parsedTags.length > 0, optional: true },
                   ].map(({ label, done, optional }) => (
                     <div key={label} className="flex items-center gap-2.5">
                       <div
@@ -476,7 +459,6 @@ export default function AskQuestionPage() {
               </div>
             )}
           </aside>
-
         </div>
       </main>
     </div>
