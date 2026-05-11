@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
 
 interface Suggestion {
@@ -16,6 +16,7 @@ export default function Navbar() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -25,31 +26,22 @@ export default function Navbar() {
   const user = auth?.user;
   const loading = auth?.loading;
 
-  // Sync search input with URL on mount
   useEffect(() => {
     const urlSearch = searchParams.get('search');
     if (urlSearch) setSearchQuery(urlSearch);
   }, [searchParams]);
 
-  // Debounced instant search + suggestions
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
     const trimmed = searchQuery.trim();
 
-    // Update URL for instant refresh (debounced)
     debounceRef.current = setTimeout(() => {
       const currentSearch = searchParams.get('search') || '';
       if (trimmed !== currentSearch) {
-        if (trimmed) {
-          router.push(`/?search=${encodeURIComponent(trimmed)}`);
-        } else {
-          router.push('/');
-        }
+        router.push(trimmed ? `/?search=${encodeURIComponent(trimmed)}` : '/');
       }
     }, 300);
 
-    // Fetch suggestions
     if (trimmed.length >= 2) {
       api.get('/questions/', { params: { search: trimmed } })
         .then(({ data }) => {
@@ -58,20 +50,15 @@ export default function Navbar() {
           setShowSuggestions(true);
           setHighlightedIndex(-1);
         })
-        .catch(() => {
-          setSuggestions([]);
-        });
+        .catch(() => setSuggestions([]));
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
     }
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [searchQuery, router, searchParams]);
 
-  // Click outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
@@ -82,18 +69,23 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Close mobile menu on navigation
+  useEffect(() => {
+    setShowMobileMenu(false);
+  }, [searchParams]);
+
   const handleLogout = () => {
     auth?.logout();
     router.push('/');
     setShowUserMenu(false);
+    setShowMobileMenu(false);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setShowSuggestions(false);
-    if (searchQuery.trim()) {
-      router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
+    setShowMobileMenu(false);
+    if (searchQuery.trim()) router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   const handleSuggestionClick = (id: number) => {
@@ -103,28 +95,20 @@ export default function Navbar() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions || suggestions.length === 0) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlightedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (highlightedIndex >= 0) {
-        handleSuggestionClick(suggestions[highlightedIndex].id);
-      }
-    } else if (e.key === 'Escape') {
-      setShowSuggestions(false);
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setHighlightedIndex((prev) => (prev + 1) % suggestions.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setHighlightedIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (highlightedIndex >= 0) handleSuggestionClick(suggestions[highlightedIndex].id); }
+    else if (e.key === 'Escape') setShowSuggestions(false);
   };
+
+  const closeMobile = () => setShowMobileMenu(false);
 
   return (
     <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 gap-4">
 
+          {/* Logo + Desktop Nav Links */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2.5 group">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all group-hover:scale-105">
@@ -132,26 +116,18 @@ export default function Navbar() {
               </div>
               <span className="text-xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">CampusQA</span>
             </Link>
-
             <div className="hidden md:flex items-center gap-2">
-              <Link href="/" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
-                Questions
-              </Link>
-              <Link href="/announcements" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
-                Announcements
-              </Link>
-              <Link href="/achievements" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all">
-                Achievements
-              </Link>
+              <Link href="/" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">Questions</Link>
+              <Link href="/announcements" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all">Announcements</Link>
+              <Link href="/achievements" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all">Achievements</Link>
               {!loading && user && (
-                <Link href="/ask" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all">
-                  Ask
-                </Link>
+                <Link href="/ask" className="px-4 py-2 text-sm font-semibold text-slate-700 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all">Ask</Link>
               )}
             </div>
           </div>
 
-          <div ref={searchContainerRef} className="flex-1 max-w-lg mx-4 hidden sm:flex items-center relative">
+          {/* Desktop Search */}
+          <div ref={searchContainerRef} className="flex-1 max-w-lg mx-4 hidden md:flex items-center relative">
             <form onSubmit={handleSearch} className="w-full">
               <div className="relative w-full">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,66 +138,48 @@ export default function Navbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={() => {
-                    if (suggestions.length > 0) setShowSuggestions(true);
-                  }}
+                  onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                   placeholder="Search questions..."
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-2 border-transparent rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white hover:bg-white focus:border-blue-400 focus:shadow-lg focus:shadow-blue-500/20 transition-all"
                   autoComplete="off"
                 />
               </div>
             </form>
-
-            {/* Suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-blue-500/20 border border-slate-200 overflow-hidden z-50">
                 {suggestions.map((s, i) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleSuggestionClick(s.id)}
-                    onMouseEnter={() => setHighlightedIndex(i)}
-                    className={`w-full text-left px-4 py-3 text-sm font-medium transition-all flex items-center gap-3 ${
-                      i === highlightedIndex ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'text-slate-800 hover:bg-slate-50'
-                    }`}
-                  >
+                  <button key={s.id} onClick={() => handleSuggestionClick(s.id)} onMouseEnter={() => setHighlightedIndex(i)}
+                    className={`w-full text-left px-4 py-3 text-sm font-medium transition-all flex items-center gap-3 ${i === highlightedIndex ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'text-slate-800 hover:bg-slate-50'}`}>
                     <svg className={`w-4 h-4 shrink-0 ${i === highlightedIndex ? 'text-white' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <span className="truncate">{s.title}</span>
                   </button>
                 ))}
-                <div className={`px-4 py-2.5 text-xs border-t border-slate-100 ${highlightedIndex === suggestions.length ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' : 'text-slate-400 bg-slate-50'}`}>
-                  Press Enter to search all results
-                </div>
+                <div className="px-4 py-2.5 text-xs border-t border-slate-100 text-slate-400 bg-slate-50">Press Enter to search all results</div>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right side */}
+          <div className="flex items-center gap-2">
+            {/* Desktop auth */}
             {!loading && !user ? (
-              <>
-                <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-blue-600 px-4 py-2 hover:bg-blue-50 rounded-xl transition-all">
-                  Log in
-                </Link>
-                <Link href="/signup" className="text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:scale-105">
-                  Sign up
-                </Link>
-              </>
+              <div className="hidden md:flex items-center gap-3">
+                <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-blue-600 px-4 py-2 hover:bg-blue-50 rounded-xl transition-all">Log in</Link>
+                <Link href="/signup" className="text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all hover:scale-105">Sign up</Link>
+              </div>
             ) : user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-100 rounded-xl transition-all border border-transparent hover:border-slate-200"
-                >
+              <div className="relative hidden md:block">
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2.5 px-3 py-2 hover:bg-slate-100 rounded-xl transition-all border border-transparent hover:border-slate-200">
                   <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-purple-500 shadow-lg shadow-blue-500/30 rounded-xl flex items-center justify-center text-white font-black text-sm">
                     {user?.username?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <span className="text-sm font-bold text-slate-900 hidden sm:block">{user?.username}</span>
-                  <svg className="w-4 h-4 text-slate-600 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="text-sm font-bold text-slate-900">{user?.username}</span>
+                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-
                 {showUserMenu && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
@@ -235,46 +193,23 @@ export default function Navbar() {
                           </span>
                         )}
                       </div>
-                      <Link
-                        href={`/profile/${user?.username}`}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                      <Link href={`/profile/${user?.username}`} className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-blue-50 hover:text-blue-600 transition-all" onClick={() => setShowUserMenu(false)}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         My Profile
                       </Link>
-                      <Link
-                        href="/ask"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-green-50 hover:text-green-600 transition-all"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
+                      <Link href="/ask" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-green-50 hover:text-green-600 transition-all" onClick={() => setShowUserMenu(false)}>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Ask a Question
                       </Link>
                       {user?.role && user.role !== 'student' && (
-                        <Link
-                          href="/announcements/create"
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-purple-50 hover:text-purple-600 transition-all"
-                          onClick={() => setShowUserMenu(false)}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                          </svg>
+                        <Link href="/announcements/create" className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-purple-50 hover:text-purple-600 transition-all" onClick={() => setShowUserMenu(false)}>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
                           Post Announcement
                         </Link>
                       )}
                       <div className="border-t border-slate-100 mt-2 pt-2">
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-all"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                          </svg>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 transition-all">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                           Log out
                         </button>
                       </div>
@@ -283,9 +218,121 @@ export default function Navbar() {
                 )}
               </div>
             ) : null}
+
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl hover:bg-slate-100 transition-all"
+              aria-label="Toggle menu"
+            >
+              {showMobileMenu ? (
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* ── Mobile Dropdown ── */}
+      {showMobileMenu && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-10 bg-black/20 backdrop-blur-sm md:hidden" onClick={closeMobile} />
+
+          <div className="md:hidden absolute top-16 left-0 right-0 z-20 bg-white border-b border-slate-200 shadow-2xl">
+
+            {/* Mobile Search */}
+            <div className="px-4 py-3 border-b border-slate-100">
+              <form onSubmit={handleSearch} className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search questions..."
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-100 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 transition-all"
+                  autoComplete="off"
+                />
+              </form>
+            </div>
+
+            {/* Nav Links */}
+            <div className="px-4 py-2 space-y-0.5">
+              <Link href="/" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 text-sm font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Questions
+              </Link>
+              <Link href="/announcements" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 text-sm font-semibold text-slate-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                Announcements
+              </Link>
+              <Link href="/achievements" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 text-sm font-semibold text-slate-700 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                Achievements
+              </Link>
+              {!loading && user && (
+                <Link href="/ask" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 text-sm font-semibold text-slate-700 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Ask a Question
+                </Link>
+              )}
+            </div>
+
+            {/* Auth Section */}
+            <div className="px-4 py-3 border-t border-slate-100">
+              {!loading && !user ? (
+                <div className="flex gap-3">
+                  <Link href="/login" onClick={closeMobile} className="flex-1 text-center text-sm font-semibold text-slate-700 border-2 border-slate-200 hover:border-blue-300 hover:text-blue-600 px-4 py-2.5 rounded-xl transition-all">
+                    Log in
+                  </Link>
+                  <Link href="/signup" onClick={closeMobile} className="flex-1 text-center text-sm font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2.5 rounded-xl shadow-lg shadow-blue-500/30">
+                    Sign up
+                  </Link>
+                </div>
+              ) : user ? (
+                <div className="space-y-0.5">
+                  {/* User info card */}
+                  <div className="flex items-center gap-3 px-3 py-3 mb-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+                    <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-500/30 shrink-0">
+                      {user?.username?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{user?.username}</p>
+                      {user?.role && user.role !== 'student' && (
+                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                          {user.role === 'hod' ? 'HOD' : user.role === 'dean' ? 'Dean' : 'Faculty'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Link href={`/profile/${user?.username}`} onClick={closeMobile} className="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    My Profile
+                  </Link>
+                  {user?.role && user.role !== 'student' && (
+                    <Link href="/announcements/create" onClick={closeMobile} className="flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-purple-50 hover:text-purple-600 rounded-xl transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                      Post Announcement
+                    </Link>
+                  )}
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Log out
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </>
+      )}
     </nav>
   );
 }

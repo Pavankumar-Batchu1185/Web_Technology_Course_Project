@@ -209,26 +209,32 @@ export default function CreateAchievementPage() {
           )}
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-300 text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-colors"
-            >
-              {submitting ? (
-                <><div className="w-4 h-4 text-black border-2 border-white/30 border-t-white rounded-full animate-spin" />Posting…</>
-              ) : (
-                <>🏆 Post Achievement</>
-              )}
-            </button>
-          </div>
+<div className="flex items-center justify-end gap-3 pt-1">
+  <button
+    type="button"
+    onClick={() => router.back()}
+    className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+  >
+    Cancel
+  </button>
+  <button
+    type="submit"
+    disabled={submitting}
+    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md"
+  >
+    {submitting ? (
+      <>
+        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <span>Posting…</span>
+      </>
+    ) : (
+      <>
+        <span>🏆</span>
+        <span>Post Achievement</span>
+      </>
+    )}
+  </button>
+</div>
         </form>
       </main>
     </div>
