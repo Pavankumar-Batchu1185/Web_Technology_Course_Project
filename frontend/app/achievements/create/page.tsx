@@ -218,10 +218,10 @@ export default function CreateAchievementPage() {
     Cancel
   </button>
   <button
-    type="submit"
-    disabled={submitting}
-    className="flex items-center gap-2 bg-gray-900 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md"
-  >
+  type="submit"
+  disabled={submitting}
+  className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 disabled:bg-violet-300 disabled:cursor-not-allowed text-white px-7 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-md"
+>
     {submitting ? (
       <>
         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
