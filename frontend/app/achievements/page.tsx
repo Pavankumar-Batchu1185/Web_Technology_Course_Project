@@ -157,25 +157,19 @@ export default function AchievementsPage() {
       );
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAF8F5' }}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20">
       <NavbarWrapper />
 
-      <header
-        className="relative overflow-hidden border-b"
-        style={{ borderColor: '#ede9e3', background: '#fff' }}
-      >
+      <header className="relative overflow-hidden border-b border-slate-200 bg-white/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
-            <p className="text-xs font-semibold tracking-widest uppercase text-amber-600 mb-2">
+            <p className="text-xs font-semibold tracking-widest uppercase text-blue-600 mb-2">
               Student Spotlight
             </p>
-            <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-none"
-              style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: '-0.02em' }}
-            >
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-none tracking-tight">
               Achievements
             </h1>
-            <p className="text-gray-400 mt-2 text-base">
+            <p className="text-slate-400 mt-2 text-base">
               {loading ? '—' : `${achievements.length} milestone${achievements.length !== 1 ? 's' : ''} and counting`}
             </p>
           </div>
@@ -183,8 +177,7 @@ export default function AchievementsPage() {
           {user && (
             <Link
               href="/achievements/create"
-              className="inline-flex items-center gap-2.5 text-sm font-bold px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 self-start md:self-auto"
-              style={{ background: '#1a1a1a', color: '#fff' }}
+              className="inline-flex items-center gap-2.5 text-sm font-bold px-6 py-3 rounded-xl transition-all hover:scale-105 active:scale-95 self-start md:self-auto bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg shadow-blue-500/30"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -209,12 +202,11 @@ export default function AchievementsPage() {
               <button
                 key={f}
                 onClick={() => setActiveFilter(f)}
-                className="text-sm font-semibold px-4 py-1.5 rounded-full transition-all duration-200"
-                style={
+                className={`text-sm font-semibold px-4 py-2 rounded-full transition-all ${
                   active
-                    ? { background: '#1a1a1a', color: '#fff' }
-                    : { background: '#fff', color: '#6b6b6b', border: '1px solid #ddd' }
-                }
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
               >
                 {f}
               </button>
