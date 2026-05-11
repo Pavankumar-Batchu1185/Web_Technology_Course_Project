@@ -172,6 +172,18 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
             question.tags.add(tag)
         return question
     
+    def to_internal_value(self, data):
+        # Handle tags sent as JSON string from FormData
+        if isinstance(data.get('tags'), str):
+            import json
+            try:
+                mutable = data.copy()
+                mutable.setlist('tags', json.loads(data['tags']))
+                data = mutable
+            except (json.JSONDecodeError, AttributeError):
+                pass
+        return super().to_internal_value(data)
+    
     def to_representation(self, instance):
         return QuestionListSerializer(instance, context=self.context).data
 
